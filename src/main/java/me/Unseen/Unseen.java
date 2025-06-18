@@ -18,8 +18,13 @@ public class Unseen extends JavaPlugin implements Listener {
 
     @Override
     public void onEnable() {
+        saveDefaultConfig();
+
+        int visibilityDistance = getConfig().getInt("visibility-distance", 20);
+
+        runVisibilityUpdater(visibilityDistance);
+
         Bukkit.getPluginManager().registerEvents(this, this);
-        runVisibilityUpdater();
         getLogger().info("Unseen is now enabled.");
     }
 
@@ -28,14 +33,12 @@ public class Unseen extends JavaPlugin implements Listener {
         getLogger().info("Unseen is now disabled.");
     }
 
-    private void runVisibilityUpdater() {
+    private void runVisibilityUpdater(int visibilityDistance) {
         Bukkit.getScheduler().runTaskTimer(this, () -> {
             for (Player p1 : Bukkit.getOnlinePlayers()) {
                 for (Player p2 : Bukkit.getOnlinePlayers()) {
-                    if (p1.equals(p2))
-                        continue;
-                    if (!p1.getWorld().equals(p2.getWorld()))
-                        continue;
+                    if (p1.equals(p2)) continue;
+                    if (!p1.getWorld().equals(p2.getWorld())) continue;
 
                     double distance = p1.getLocation().distance(p2.getLocation());
 

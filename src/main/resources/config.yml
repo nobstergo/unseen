@@ -1,0 +1,3 @@
+# This is the distance players are only visible to each other within
+# Default: 20
+visibility-distance: 20
