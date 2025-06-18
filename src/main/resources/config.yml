@@ -1,3 +1,9 @@
 # This is the distance players are only visible to each other within
 # Default: 20
 visibility-distance: 20
+
+# You can change the visibility of join, quit, and death messages here
+# Default: false
+show-join-message: false
+show-quit-message: false
+show-death-message: false
