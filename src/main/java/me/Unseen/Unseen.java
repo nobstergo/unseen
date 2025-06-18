@@ -1,22 +1,25 @@
 package me.Unseen;
 
 import org.bukkit.Bukkit;
-import org.bukkit.event.EventHandler;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
-import org.bukkit.event.player.*;
+import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.server.TabCompleteEvent;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.event.entity.PlayerDeathEvent;
 
 import java.util.Iterator;
 
 public class Unseen extends JavaPlugin implements Listener {
 
+    private final int visibilityDistance = 20;
+
     @Override
     public void onEnable() {
         Bukkit.getPluginManager().registerEvents(this, this);
+        runVisibilityUpdater();
         getLogger().info("Unseen is now enabled.");
     }
 
@@ -25,28 +28,30 @@ public class Unseen extends JavaPlugin implements Listener {
         getLogger().info("Unseen is now disabled.");
     }
 
-    @EventHandler
-    public void onPlayerJoin(PlayerJoinEvent event) {
-        Player joining = event.getPlayer();
+    private void runVisibilityUpdater() {
+        Bukkit.getScheduler().runTaskTimer(this, () -> {
+            for (Player p1 : Bukkit.getOnlinePlayers()) {
+                for (Player p2 : Bukkit.getOnlinePlayers()) {
+                    if (p1.equals(p2))
+                        continue;
+                    if (!p1.getWorld().equals(p2.getWorld()))
+                        continue;
 
-        event.setJoinMessage(null);
+                    double distance = p1.getLocation().distance(p2.getLocation());
 
-        for (Player other : Bukkit.getOnlinePlayers()) {
-            if (!other.equals(joining)) {
-                if (!joining.getWorld().equals(other.getWorld())) continue;
-
-                double distance = joining.getLocation().distance(other.getLocation());
-
-                if (distance <= 20) {
-                    joining.showPlayer(this, other);
-                    other.showPlayer(this, joining);
-                } else {
-                    joining.hidePlayer(this, other);
-                    other.hidePlayer(this, joining);
+                    if (distance <= visibilityDistance) {
+                        p1.showPlayer(this, p2);
+                    } else {
+                        p1.hidePlayer(this, p2);
+                    }
                 }
             }
-        }
+        }, 0L, 40L);
+    }
 
+    @EventHandler
+    public void onPlayerJoin(PlayerJoinEvent event) {
+        event.setJoinMessage(null);
     }
 
     @EventHandler
