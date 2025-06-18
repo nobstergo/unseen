@@ -33,10 +33,20 @@ public class Unseen extends JavaPlugin implements Listener {
 
         for (Player other : Bukkit.getOnlinePlayers()) {
             if (!other.equals(joining)) {
-                joining.hidePlayer(this, other);
-                other.hidePlayer(this, joining);
+                if (!joining.getWorld().equals(other.getWorld())) continue;
+
+                double distance = joining.getLocation().distance(other.getLocation());
+
+                if (distance <= 20) {
+                    joining.showPlayer(this, other);
+                    other.showPlayer(this, joining);
+                } else {
+                    joining.hidePlayer(this, other);
+                    other.hidePlayer(this, joining);
+                }
             }
         }
+
     }
 
     @EventHandler
