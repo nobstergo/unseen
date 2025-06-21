@@ -47,7 +47,6 @@ public class Unseen extends JavaPlugin implements Listener, TabCompleter {
         runVisibilityUpdater(getConfig().getInt("visibility-distance", 20));
     }
 
-
     @Override
     public boolean onCommand(@NotNull CommandSender sender, Command command, @NotNull String label, String[] args) {
         if (command.getName().equalsIgnoreCase("unseen")) {
@@ -59,7 +58,8 @@ public class Unseen extends JavaPlugin implements Listener, TabCompleter {
             switch (args[0].toLowerCase()) {
                 case "reload":
                     if (!sender.hasPermission("unseen.admin")) {
-                        sender.sendMessage(Component.text("You don't have permission to use this command.").color(NamedTextColor.RED));
+                        sender.sendMessage(Component.text("You don't have permission to use this command.")
+                                .color(NamedTextColor.RED));
                         return true;
                     }
                     reloadConfig();
@@ -68,19 +68,23 @@ public class Unseen extends JavaPlugin implements Listener, TabCompleter {
 
                 case "distance":
                     if (!sender.hasPermission("unseen.admin")) {
-                        sender.sendMessage(Component.text("You don't have permission to use this command.").color(NamedTextColor.RED));
+                        sender.sendMessage(Component.text("You don't have permission to use this command.")
+                                .color(NamedTextColor.RED));
                         return true;
                     }
                     if (args.length != 2) {
-                        sender.sendMessage(Component.text("Usage: /unseen distance <number>").color(NamedTextColor.YELLOW));
+                        sender.sendMessage(
+                                Component.text("Usage: /unseen distance <number>").color(NamedTextColor.YELLOW));
                         return true;
                     }
                     try {
                         int distance = Integer.parseInt(args[1]);
                         getConfig().set("visibility-distance", distance);
                         saveConfig();
-                        sender.sendMessage(Component.text("Visibility distance set to " + distance).color(NamedTextColor.GREEN));
-                        sender.sendMessage(Component.text("Reload the plugin with /unseen reload to apply changes.").color(NamedTextColor.YELLOW));
+                        sender.sendMessage(
+                                Component.text("Visibility distance set to " + distance).color(NamedTextColor.GREEN));
+                        sender.sendMessage(Component.text("Reload the plugin with /unseen reload to apply changes.")
+                                .color(NamedTextColor.YELLOW));
                     } catch (NumberFormatException e) {
                         sender.sendMessage(Component.text("Invalid number!").color(NamedTextColor.RED));
                     }
@@ -90,7 +94,8 @@ public class Unseen extends JavaPlugin implements Listener, TabCompleter {
                 case "leavemessage":
                 case "deathmessage":
                     if (!sender.hasPermission("unseen.admin")) {
-                        sender.sendMessage(Component.text("You don't have permission to use this command.").color(NamedTextColor.RED));
+                        sender.sendMessage(Component.text("You don't have permission to use this command.")
+                                .color(NamedTextColor.RED));
                         return true;
                     }
                     String key = switch (args[0].toLowerCase()) {
@@ -103,8 +108,10 @@ public class Unseen extends JavaPlugin implements Listener, TabCompleter {
                         boolean current = getConfig().getBoolean(key, false);
                         getConfig().set(key, !current);
                         saveConfig();
-                        sender.sendMessage(Component.text(key + " set to " + (!current)).color(NamedTextColor.DARK_GREEN));
-                        sender.sendMessage(Component.text("Reload the plugin with /unseen reload to apply changes.").color(NamedTextColor.YELLOW));
+                        sender.sendMessage(
+                                Component.text(key + " set to " + (!current)).color(NamedTextColor.DARK_GREEN));
+                        sender.sendMessage(Component.text("Reload the plugin with /unseen reload to apply changes.")
+                                .color(NamedTextColor.YELLOW));
                     }
                     break;
 
@@ -128,13 +135,17 @@ public class Unseen extends JavaPlugin implements Listener, TabCompleter {
                     String version = getDescription().getVersion();
                     sender.sendMessage(Component.text("Unseen Plugin v" + version).color(NamedTextColor.GOLD));
                     sender.sendMessage(Component.text("Author: nobstergo").color(NamedTextColor.BLUE));
-                    sender.sendMessage(Component.text("Contributor: alprny - Idea, Testing Feedback").color(NamedTextColor.AQUA));
-                    sender.sendMessage(Component.text("Plugin hides players in the tablist, social interactions, and chat autocomplete based on distance. Join/leave/death messages also toggleable.").color(NamedTextColor.DARK_GREEN));
+                    sender.sendMessage(
+                            Component.text("Contributor: alprny - Idea, Testing Feedback").color(NamedTextColor.AQUA));
+                    sender.sendMessage(Component.text(
+                            "Plugin hides players in the tablist, social interactions, and chat autocomplete based on distance. Join/leave/death messages also toggleable.")
+                            .color(NamedTextColor.DARK_GREEN));
                     sender.sendMessage(Component.text("Made with <3").color(NamedTextColor.LIGHT_PURPLE));
                     break;
 
                 default:
-                    sender.sendMessage(Component.text("Unknown argument! Look at /unseen help and try again.").color(NamedTextColor.RED));
+                    sender.sendMessage(Component.text("Unknown argument! Look at /unseen help and try again.")
+                            .color(NamedTextColor.RED));
                     break;
             }
             return true;
@@ -143,14 +154,17 @@ public class Unseen extends JavaPlugin implements Listener, TabCompleter {
     }
 
     @Override
-    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, Command command, @NotNull String alias, String[] args) {
-        if (!command.getName().equalsIgnoreCase("unseen")) return Collections.emptyList();
+    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, Command command, @NotNull String alias,
+            String[] args) {
+        if (!command.getName().equalsIgnoreCase("unseen"))
+            return Collections.emptyList();
 
         if (args.length == 1) {
             List<String> completions = new ArrayList<>();
 
             if (sender.hasPermission("unseen.admin")) {
-                completions.addAll(List.of("reload", "distance", "joinmessage", "leavemessage", "deathmessage", "help", "info"));
+                completions.addAll(
+                        List.of("reload", "distance", "joinmessage", "leavemessage", "deathmessage", "help", "info"));
             } else {
                 completions.add("info");
             }
@@ -163,13 +177,14 @@ public class Unseen extends JavaPlugin implements Listener, TabCompleter {
         return Collections.emptyList();
     }
 
-
     private void runVisibilityUpdater(int visibilityDistance) {
         Bukkit.getScheduler().runTaskTimer(this, () -> {
             for (Player p1 : Bukkit.getOnlinePlayers()) {
                 for (Player p2 : Bukkit.getOnlinePlayers()) {
-                    if (p1.equals(p2)) continue;
-                    if (!p1.getWorld().equals(p2.getWorld())) continue;
+                    if (p1.equals(p2))
+                        continue;
+                    if (!p1.getWorld().equals(p2.getWorld()))
+                        continue;
 
                     double distance = p1.getLocation().distance(p2.getLocation());
 
