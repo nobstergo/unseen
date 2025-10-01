@@ -1,18 +1,16 @@
 name: Unseen
-version: 1.1
+version: 1.2
 main: me.Unseen.Unseen
-api-version: 1.20
+api-version: 1.21.8
 author: [nobstergo]
 contributors: [alprny]
+depend: [ProtocolLib]
 commands:
   unseen:
-    description: Unseen plugin main command
+    description: Unseen plugin main command7
     usage: /unseen <subcommand>
     permission: unseen.use
 permissions:
-  unseen.use:
-    description: Allows use of /unseen info
-    default: true
   unseen.admin:
     description: Admin permissions for reload & config editing
     default: op
