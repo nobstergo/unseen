@@ -2,3 +2,6 @@
 /.idea
 *.iml
 *.log
+/.classpath
+/libs/
+/.vscode/
