@@ -26,6 +26,11 @@ public class Unseen extends JavaPlugin implements Listener, TabCompleter {
 
     @Override
     public void onEnable() {
+        if (Bukkit.getPluginManager().getPlugin("ProtocolLib") != null) {
+            new PacketHider(this); // only runs if ProtocolLib exists
+        } else {
+            getLogger().warning("ProtocolLib not found! Tab list/social menu hiding will not work.");
+        }
         Bukkit.getScheduler().cancelTasks(this);
         runVisibilityUpdater(getConfig().getInt("visibility-distance", 20));
 
@@ -49,76 +54,112 @@ public class Unseen extends JavaPlugin implements Listener, TabCompleter {
 
     @Override
     public boolean onCommand(@NotNull CommandSender sender, Command command, @NotNull String label, String[] args) {
-        if (command.getName().equalsIgnoreCase("unseen")) {
-            if (args.length == 0) {
-                sender.sendMessage(Component.text("Type /unseen help for command info.").color(NamedTextColor.RED));
-                return true;
-            }
+            if (command.getName().equalsIgnoreCase("unseen")) {
+                if (args.length == 0) {
+                    sender.sendMessage(
+                        Component.text("[Unseen] ", NamedTextColor.GOLD)
+                            .append(Component.text("Type /unseen help for command info.", NamedTextColor.RED))
+                    );
+                    return true;
+                }
 
             switch (args[0].toLowerCase()) {
-                case "reload":
-                    if (!sender.hasPermission("unseen.admin")) {
-                        sender.sendMessage(Component.text("You don't have permission to use this command.")
-                                .color(NamedTextColor.RED));
-                        return true;
-                    }
-                    reloadConfig();
-                    sender.sendMessage(Component.text("Config is reloaded successfully!").color(NamedTextColor.GREEN));
-                    break;
+            case "distance":
+                if (!sender.hasPermission("unseen.admin")) {
+                    sender.sendMessage(
+                        Component.text("[Unseen] ", NamedTextColor.GOLD)
+                            .append(Component.text("You don't have permission to use this command.", NamedTextColor.RED))
+                    );
+                    return true;
+                }
+                if (args.length != 2) {
+                    sender.sendMessage(
+                        Component.text("[Unseen] ", NamedTextColor.GOLD)
+                            .append(Component.text("Usage: /unseen distance <number>", NamedTextColor.RED))
+                    );
+                    return true;
+                }
+                try {
+                    int distance = Integer.parseInt(args[1]);
+                    getConfig().set("visibility-distance", distance);
+                    saveConfig();
+                    Bukkit.getScheduler().cancelTasks(this);
+                    runVisibilityUpdater(distance);
 
-                case "distance":
-                    if (!sender.hasPermission("unseen.admin")) {
-                        sender.sendMessage(Component.text("You don't have permission to use this command.")
-                                .color(NamedTextColor.RED));
-                        return true;
-                    }
-                    if (args.length != 2) {
-                        sender.sendMessage(
-                                Component.text("Usage: /unseen distance <number>").color(NamedTextColor.YELLOW));
-                        return true;
-                    }
-                    try {
-                        int distance = Integer.parseInt(args[1]);
-                        getConfig().set("visibility-distance", distance);
-                        saveConfig();
-                        sender.sendMessage(
-                                Component.text("Visibility distance set to " + distance).color(NamedTextColor.GREEN));
-                        sender.sendMessage(Component.text("Reload the plugin with /unseen reload to apply changes.")
-                                .color(NamedTextColor.YELLOW));
-                    } catch (NumberFormatException e) {
-                        sender.sendMessage(Component.text("Invalid number!").color(NamedTextColor.RED));
-                    }
-                    break;
+                    sender.sendMessage(
+                        Component.text("[Unseen] ", NamedTextColor.GOLD)
+                            .append(Component.text("Visibility distance set to " + distance, NamedTextColor.GREEN))
+                    );
+                    sender.sendMessage(
+                        Component.text("[Unseen] ", NamedTextColor.GOLD)
+                            .append(Component.text("Changes applied!", NamedTextColor.YELLOW))
+                    );
+                } catch (NumberFormatException e) {
+                    sender.sendMessage(
+                        Component.text("[Unseen] ", NamedTextColor.GOLD)
+                            .append(Component.text("Invalid distance!", NamedTextColor.RED))
+                    );
+                }
+                break;
 
                 case "joinmessage":
                 case "leavemessage":
                 case "deathmessage":
                     if (!sender.hasPermission("unseen.admin")) {
-                        sender.sendMessage(Component.text("You don't have permission to use this command.")
-                                .color(NamedTextColor.RED));
+                        sender.sendMessage(
+                            Component.text("[Unseen] ", NamedTextColor.GOLD)
+                                .append(Component.text("You don't have permission to use this command.", NamedTextColor.RED))
+                        );
                         return true;
                     }
-                    String key = switch (args[0].toLowerCase()) {
+                    String configKey = switch (args[0].toLowerCase()) {
                         case "joinmessage" -> "show-join-message";
                         case "leavemessage" -> "show-quit-message";
                         case "deathmessage" -> "show-death-message";
                         default -> null;
                     };
-                    if (key != null) {
-                        boolean current = getConfig().getBoolean(key, false);
-                        getConfig().set(key, !current);
+                    String displayName = switch (args[0].toLowerCase()) {
+                        case "joinmessage" -> "Join messages";
+                        case "leavemessage" -> "Quit messages";
+                        case "deathmessage" -> "Death messages";
+                        default -> null;
+                    };
+
+                    if (configKey != null) {
+                        boolean current = getConfig().getBoolean(configKey, false);
+                        boolean newValue = !current;
+                        getConfig().set(configKey, newValue);
                         saveConfig();
+
+                        NamedTextColor statusColor = newValue ? NamedTextColor.GREEN : NamedTextColor.RED;
+
                         sender.sendMessage(
-                                Component.text(key + " set to " + (!current)).color(NamedTextColor.DARK_GREEN));
-                        sender.sendMessage(Component.text("Reload the plugin with /unseen reload to apply changes.")
-                                .color(NamedTextColor.YELLOW));
+                            Component.text("[Unseen] ", NamedTextColor.GOLD)
+                                .append(Component.text(displayName + " " + (newValue ? "enabled" : "disabled"), statusColor))
+                        );
+
+                        if (configKey.equals("show-join-message") || configKey.equals("show-quit-message") || configKey.equals("show-death-message")) {
+                            reloadConfig();
+                        }
                     }
                     break;
 
+            case "reload":
+                if (!sender.hasPermission("unseen.admin")) {
+                    sender.sendMessage(Component.text("[Unseen] You don't have permission to use this command.")
+                            .color(NamedTextColor.RED));
+                    return true;
+                }
+                reloadConfig();
+                sender.sendMessage(
+                    Component.text("[Unseen] ", NamedTextColor.GOLD)
+                        .append(Component.text("Config reloaded successfully!", NamedTextColor.GREEN))
+                );
+                break;
+
                 case "help":
-                    sender.sendMessage(Component.text("=== Unseen Plugin Commands ===").color(NamedTextColor.GOLD));
-                    sender.sendMessage(Component.text("/unseen reload ").color(NamedTextColor.YELLOW)
-                            .append(Component.text("- Reload the config file").color(NamedTextColor.GRAY)));
+                    String version = getDescription().getVersion();
+                    sender.sendMessage(Component.text("====== Unseen v" + version + " ======").color(NamedTextColor.GOLD));
                     sender.sendMessage(Component.text("/unseen distance <number> ").color(NamedTextColor.YELLOW)
                             .append(Component.text("- Set player visibility distance").color(NamedTextColor.GRAY)));
                     sender.sendMessage(Component.text("/unseen joinmessage ").color(NamedTextColor.YELLOW)
@@ -127,25 +168,16 @@ public class Unseen extends JavaPlugin implements Listener, TabCompleter {
                             .append(Component.text("- Toggle leave messages").color(NamedTextColor.GRAY)));
                     sender.sendMessage(Component.text("/unseen deathmessage ").color(NamedTextColor.YELLOW)
                             .append(Component.text("- Toggle death messages").color(NamedTextColor.GRAY)));
-                    sender.sendMessage(Component.text("/unseen info ").color(NamedTextColor.YELLOW)
-                            .append(Component.text("- Plugin info and authors").color(NamedTextColor.GRAY)));
+                    sender.sendMessage(Component.text("/unseen reload ").color(NamedTextColor.YELLOW)
+                            .append(Component.text("- Reload the config file").color(NamedTextColor.GRAY)));
                     break;
 
-                case "info":
-                    String version = getDescription().getVersion();
-                    sender.sendMessage(Component.text("Unseen Plugin v" + version).color(NamedTextColor.GOLD));
-                    sender.sendMessage(Component.text("Author: nobstergo").color(NamedTextColor.BLUE));
-                    sender.sendMessage(
-                            Component.text("Contributor: alprny - Idea, Testing Feedback").color(NamedTextColor.AQUA));
-                    sender.sendMessage(Component.text(
-                            "Plugin hides players in the tablist, social interactions, and chat autocomplete based on distance. Join/leave/death messages also toggleable.")
-                            .color(NamedTextColor.DARK_GREEN));
-                    sender.sendMessage(Component.text("Made with <3").color(NamedTextColor.LIGHT_PURPLE));
-                    break;
 
                 default:
-                    sender.sendMessage(Component.text("Unknown argument! Look at /unseen help and try again.")
-                            .color(NamedTextColor.RED));
+                sender.sendMessage(
+                    Component.text("[Unseen] ", NamedTextColor.GOLD)
+                        .append(Component.text("Unknown argument! Look at /unseen help and try again.", NamedTextColor.RED))
+                );
                     break;
             }
             return true;
@@ -164,12 +196,20 @@ public class Unseen extends JavaPlugin implements Listener, TabCompleter {
 
             if (sender.hasPermission("unseen.admin")) {
                 completions.addAll(
-                        List.of("reload", "distance", "joinmessage", "leavemessage", "deathmessage", "help", "info"));
-            } else {
-                completions.add("info");
+                        List.of("distance", "joinmessage", "leavemessage", "deathmessage", "reload", "help"));
             }
 
             return completions.stream()
+                    .filter(c -> {
+                        Player target = Bukkit.getPlayerExact(c);
+                        if (target == null) return true;
+
+                        // If sender is OP, show all names
+                        if (sender.isOp()) return true;
+
+                        // Hide OPs from normal players
+                        return !target.isOp();
+                    })
                     .filter(c -> c.toLowerCase().startsWith(args[0].toLowerCase()))
                     .toList();
         }
@@ -185,6 +225,19 @@ public class Unseen extends JavaPlugin implements Listener, TabCompleter {
                         continue;
                     if (!p1.getWorld().equals(p2.getWorld()))
                         continue;
+
+                    // If p1 is OP, always show everyone
+                    if (p1.isOp()) {
+                        p1.showPlayer(this, p2);
+                        continue;
+                    }
+
+                    // If p2 is OP, hide them from normal players
+                    if (p2.isOp()) {
+                        p1.hidePlayer(this, p2);
+                        continue;
+                    }
+
 
                     double distance = p1.getLocation().distance(p2.getLocation());
 
