@@ -1,13 +1,13 @@
 name: Unseen
-version: 1.2
+version: 1.3
 main: me.Unseen.Unseen
-api-version: 1.21.8
+api-version: 1.21
 author: [nobstergo]
 contributors: [alprny]
 depend: [ProtocolLib]
 commands:
   unseen:
-    description: Unseen plugin main command7
+    description: Unseen plugin main command
     usage: /unseen <subcommand>
     permission: unseen.use
 permissions:
